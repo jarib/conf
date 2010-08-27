@@ -2,7 +2,7 @@ class Conf
 
   class InvalidKeyError < StandardError
   end
-  
+
   class InvalidStateError < StandardError
   end
 
@@ -50,26 +50,27 @@ class Conf
     def lock!
       @locked = true
     end
-    
+
     def unlock!
       @locked = false
     end
-    
+
     def edit(&blk)
       edit!
       instance_eval(&blk)
       done!
     end
-    
+
     def locked?
       @locked
     end
 
     def section(start_key)
       result = @parent ? @parent.section(start_key) : {}
+      rx = /^#{Regexp.escape(start_key).gsub("\\*", ".+?")}/
 
       @data.each do |key, value|
-        result[key] = value if key =~ /^#{Regexp.escape start_key}/
+        result[key] = value if key =~ rx
       end
 
       result

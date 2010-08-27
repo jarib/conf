@@ -105,11 +105,20 @@ describe "Conf" do
       foo.bla.baz 3
     }.section("foo.bar").should == {"foo.bar.baz" => 1, "foo.bar.boo" => 2}
   end
-  
+
+  it "handles wildcards in section() string" do
+    Conf.define(:tmp) {
+      foo.bar.baz 1
+      foo.bar.boo 2
+      foo.bla.baz 3
+    }.section("foo.*.baz").should == {"foo.bar.baz" => 1, "foo.bla.baz" => 3}
+  end
+
   it "merges parent data when fetching section" do
     parent = Conf.define(:parent) { foo.bar.baz 1 }
     child = Conf.define(:child, parent) { foo.bar.bah 2; }
-    
+
     child.section("foo.bar").should == {"foo.bar.baz" => 1, "foo.bar.bah" => 2}
   end
+
 end
