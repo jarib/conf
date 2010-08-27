@@ -27,8 +27,6 @@ describe "Conf" do
 
     c = Conf.get(:child)
 
-    pp c
-
     c.nested.ruby.blocks.should be_false
     c.single.should == "pair"
     c.properties.like.syntax.should == :nice

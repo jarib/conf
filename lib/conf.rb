@@ -27,6 +27,17 @@ class Conf
       @current_nesting = []
     end
 
+    def freeze
+      @parent && @parent.freeze
+      super
+    end
+
+    protected
+
+    def data
+      @data
+    end
+
     def [](key)
       k = expand_key(key)
       val = @data[k]
@@ -39,13 +50,7 @@ class Conf
     end
 
     def expand_key(key)
-      k = [@current_nesting, key].flatten.compact.join "."
-      k
-    end
-
-    def freeze
-      @parent && @parent.freeze
-      super
+      [@current_nesting, key].flatten.compact.join "."
     end
 
     def method_missing(meth, *args, &blk)
@@ -66,8 +71,17 @@ class Conf
           obj
         else
           @current_nesting << m
+          validate_nesting if frozen?
           self
         end
+      end
+    end
+
+    def validate_nesting
+      current = expand_key(nil)
+      unless @data.any? { |key,_| key.start_with?(current)} || (@parent && @parent.data.any? { |key,_| key.start_with?(current)})
+        @current_nesting.clear
+        raise "no such key: #{current.inspect}"
       end
     end
   end
