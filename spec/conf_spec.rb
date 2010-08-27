@@ -34,10 +34,15 @@ describe "Conf" do
     c.yet.another :value
     c.yet.another.should == :value
 
-    c.freeze
+    c.freeze # switch from "define" to "use" mode - change name?
+
     lambda {
       c.yet.another :changed
     }.should raise_error(RuntimeError, "can't modify frozen config")
+
+    lambda {
+      c.boo
+    }.should raise_error('no such key: "boo"')
   end
 
   it "should set a single value" do

@@ -57,10 +57,11 @@ class Conf
       m = meth.to_s
 
       if m =~ /^(\w+)=/ || args.size == 1
-        raise "can't modify frozen config" if frozen?
+        check_frozen
         key = $1 || m
         self[key] = args.first
       elsif blk
+        check_frozen
         @current_nesting << m
         instance_eval(&blk)
         @current_nesting.pop
@@ -82,6 +83,13 @@ class Conf
       unless @data.any? { |key,_| key.start_with?(current)} || (@parent && @parent.data.any? { |key,_| key.start_with?(current)})
         @current_nesting.clear
         raise "no such key: #{current.inspect}"
+      end
+    end
+
+    def check_frozen
+      if frozen?
+        @current_nesting.clear
+        raise "can't modify frozen config"
       end
     end
   end
