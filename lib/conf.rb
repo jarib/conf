@@ -6,6 +6,55 @@ class Conf
   class InvalidStateError < StandardError
   end
 
+  module ConfigValue
+    def self.create(root, key, obj = Object.new)
+      begin
+        obj.extend(self)
+        obj.__setup__(root, key)
+      rescue TypeError
+        # can't extend numbers, false, nil etc.
+      end
+
+      obj
+    end
+
+    def __setup__(root, key)
+      @__root__ = root
+      @__key__  = key
+
+      self
+    end
+
+    def method_missing(meth, *args, &blk)
+      m = meth.to_s
+      if m =~ /^(\w+)=/ || args.size == 1
+        @__root__.check_lock
+        key = [@__key__, $1 || m].compact.join(".")
+        @__root__[key] = ConfigValue.create(@__root__, key, args.first)
+      else
+        key = [@__key__, m].compact.join(".")
+
+        obj = @__root__.data[key]
+        if obj.nil? && !@__root__.locked?
+          obj = @__root__.data[key] = ConfigValue.create(@__root__, key)
+        else
+          obj = @__root__[key]
+        end
+
+        if obj.nil? && @__root__.locked?
+          raise(Conf::InvalidKeyError, key)
+        end
+
+        if blk
+          @__root__.check_lock
+          obj.instance_eval(&blk)
+        end
+
+        obj
+      end
+    end
+  end # ConfigValue
+
   def self.configs
     @configs ||= {}
   end
@@ -17,12 +66,13 @@ class Conf
     when Configuration, nil
       # ok
     else
-      raise TypeError, "expected String, Symbol, Configuration or nil, got #{parent.inspect}:#{parent.class}"
+      raise TypeError,
+      "expected String, Symbol, Configuration or nil, got #{parent.inspect}:#{parent.class}"
     end
 
     conf = configs[name] ||= Configuration.new(parent)
-
     conf.instance_eval(&blk)
+
     conf.lock!
     conf
   end
@@ -32,15 +82,17 @@ class Conf
   end
 
   class Configuration
+    include ConfigValue
+
     def initialize(parent = nil)
       if parent and not parent.kind_of? self.class
         raise TypeError, "expected #{self.class}, got #{parent.inspect}:#{parent.class}"
       end
 
-      @parent          = parent
-      @data            = {}
-      @current_nesting = []
-      @locked          = false
+      @parent   = parent
+      @data     = {}
+      @locked   = false
+      @__root__ = self
     end
 
     def key?(key)
@@ -53,6 +105,18 @@ class Conf
 
     def unlock!
       @locked = false
+    end
+
+    def unlocked(&blk)
+      unlock!
+      yield
+      lock!
+    end
+
+    def check_lock
+      if locked?
+        raise InvalidStateError, "config is locked #{@data.keys.inspect}"
+      end
     end
 
     def edit(&blk)
@@ -70,73 +134,38 @@ class Conf
       rx = /^#{Regexp.escape(start_key).gsub("\\*", ".+?")}/
 
       @data.each do |key, value|
+        next if value.instance_of? Object
         result[key] = value if key =~ rx
       end
 
       result
     end
 
-    protected
-
     def data() @data end
 
+    def fetch(key, &blk)
+      val = self[key]
+      if val.nil?
+        @data[key] = yield(key)
+      else
+        val
+      end
+    end
+
+
     def [](key)
-      k = expand_key(key)
-      val = @data[k]
-      val.nil? ? @parent && @parent[k] : val
+      val = @data[key]
+
+      if val.nil?
+        @parent && @parent[key]
+      else
+        val
+      end
     end
 
     def []=(key, value)
-      @data[expand_key(key)] = value
-      @current_nesting.clear
-    end
-
-    def expand_key(key)
-      [@current_nesting, key].flatten.compact.join "."
-    end
-
-    def method_missing(meth, *args, &blk)
-      m = meth.to_s
-
-      if m =~ /^(\w+)=/ || args.size == 1
-        check_lock
-        key = $1 || m
-        self[key] = args.first
-      elsif blk
-        check_lock
-        @current_nesting << m
-        instance_eval(&blk)
-        @current_nesting.pop
-      else
-        obj = self[m]
-        if obj != nil
-          @current_nesting.clear
-          obj
-        else
-          @current_nesting << m
-          validate_nesting if locked?
-          self
-        end
-      end
-    end
-
-    def validate_nesting
-      current = expand_key(nil)
-      match_proc = Proc.new { |key,_| key =~ /^#{Regexp.escape current}/ }
-
-      unless @data.any?(&match_proc) || (@parent && @parent.data.any?(&match_proc))
-        @current_nesting.clear
-        raise InvalidKeyError, "no such key: #{current.inspect}"
-      end
-    end
-
-    def check_lock
-      if locked?
-        @current_nesting.clear
-        raise InvalidStateError, "config is locked"
-      end
+      @data[key] = value
     end
   end
+
 end
-
-
