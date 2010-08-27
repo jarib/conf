@@ -35,14 +35,13 @@ class Conf
         key = [@__key__, m].compact.join(".")
 
         obj = @__root__.data[key]
-        if obj.nil? && !@__root__.locked?
-          obj = @__root__.data[key] = ConfigValue.create(@__root__, key)
-        else
-          obj = @__root__[key]
-        end
 
-        if obj.nil? && @__root__.locked?
-          raise(Conf::InvalidKeyError, key)
+        if obj.nil?
+          if @__root__.locked?
+            obj = @__root__.fetch(key) { raise Conf::InvalidKeyError, key }
+          else
+            obj = @__root__.data[key] = ConfigValue.create(@__root__, key)
+          end
         end
 
         if blk
@@ -134,8 +133,7 @@ class Conf
       rx = /^#{Regexp.escape(start_key).gsub("\\*", ".+?")}/
 
       @data.each do |key, value|
-        next if value.instance_of? Object
-        result[key] = value if key =~ rx
+        result[key] = value if key =~ rx and not value.instance_of? Object
       end
 
       result
