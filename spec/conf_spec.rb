@@ -8,6 +8,30 @@ describe "Conf" do
     conf.bar.should == "baz"
   end
 
+  it "can be defined with a String parent" do
+    parent = Conf.define('parent') {}
+    lambda { Conf.define('child', 'parent') {}  }.should_not raise_error
+  end
+
+  it "can be defined with a Symbol parent" do
+    parent = Conf.define(:parent) {}
+    lambda { Conf.define(:child, :parent) {}  }.should_not raise_error
+  end
+
+  it "can be defined with a Configuration parent" do
+    parent = Conf.define(:parent) {}
+    lambda { Conf.define(:child, :parent) {}  }.should_not raise_error
+  end
+
+  it "can be defined with a Configuration parent" do
+    parent = Conf.define(:parent) {}
+    lambda { Conf.define(:child, parent) {}  }.should_not raise_error
+  end
+
+  it "raises a TypeError if parent is not a known type" do
+    lambda { Conf.define(:foo, {}) {} }.should raise_error(TypeError)
+  end
+
   it "should set a nested properties-style value" do
     conf = Conf.define(:tmp) { bar.baz :boo }
     conf.bar.baz.should == :boo
@@ -59,4 +83,12 @@ describe "Conf" do
     lambda { conf.foo "baz" }.should raise_error
   end
 
+  it "raises a TypeError if parent is not nil or Configuration instance" do
+    lambda { Conf::Configuration.new({}) }.should raise_error(TypeError)
+  end
+
+  it "raises an error if the key is not found" do
+    conf = Conf.define(:tmp) { foo.bar.baz false }
+    lambda { conf.bar }.should raise_error(Conf::InvalidKeyError)
+  end
 end

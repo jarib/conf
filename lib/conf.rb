@@ -1,5 +1,8 @@
 class Conf
 
+  class InvalidKeyError < StandardError
+  end
+
   def self.configs
     @configs ||= {}
   end
@@ -43,9 +46,7 @@ class Conf
 
     protected
 
-    def data
-      @data
-    end
+    def data() @data end
 
     def [](key)
       k = expand_key(key)
@@ -91,7 +92,7 @@ class Conf
       current = expand_key(nil)
       unless @data.any? { |key,_| key.start_with?(current)} || (@parent && @parent.data.any? { |key,_| key.start_with?(current)})
         @current_nesting.clear
-        raise "no such key: #{current.inspect}"
+        raise InvalidKeyError, "no such key: #{current.inspect}"
       end
     end
 
