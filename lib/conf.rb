@@ -39,6 +39,10 @@ class Conf
       @current_nesting = []
     end
 
+    def key?(key)
+      @data.key?(key) || (@parent && @parent.key?(key))
+    end
+
     def freeze
       @parent && @parent.freeze
       super

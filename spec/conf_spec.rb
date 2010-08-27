@@ -91,4 +91,10 @@ describe "Conf" do
     conf = Conf.define(:tmp) { foo.bar.baz false }
     lambda { conf.bar }.should raise_error(Conf::InvalidKeyError)
   end
+
+  it "can check if a key exists" do
+    conf = Conf.define(:tmp) { foo.bar.baz false }
+    conf.key?("foo.bar.baz").should be_true
+    conf.key?("bar").should be_false
+  end
 end
