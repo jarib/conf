@@ -8,11 +8,13 @@ class Conf
 
   module ConfigValue
     def self.create(root, key, obj = Object.new)
+      return obj if obj == true || obj == false
+      
       begin
         obj.extend(self)
         obj.__setup__(root, key)
       rescue TypeError
-        # can't extend numbers, false, nil etc.
+        # can't extend obj
       end
 
       obj
