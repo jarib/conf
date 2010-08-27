@@ -5,10 +5,19 @@ class Conf
   end
 
   def self.define(name, parent = nil, &blk)
-    parent = parent && get(parent)
+    case parent
+    when String, Symbol
+      parent = get(parent)
+    when Configuration, nil
+      # ok
+    else
+      raise TypeError, "expected String, Symbol, Configuration or nil, got #{parent.inspect}:#{parent.class}"
+    end
+
     conf = configs[name] ||= Configuration.new(parent)
 
     conf.instance_eval(&blk)
+    conf.freeze
     conf
   end
 
