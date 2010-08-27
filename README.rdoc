@@ -1,9 +1,43 @@
 = conf
 
-Description goes here.
+Simple configuration that supports inheritance.
+
+= Example
+
+  Conf.define(:parent) do
+    properties.like.syntax = :nice
+
+    single "pair"
+
+    nested {
+      ruby {
+        blocks true
+      }
+    }
+  end
+
+  Conf.define(:child, :parent) do
+    nested {
+      ruby {
+        blocks false
+      }
+    }
+  end
+
+  c = Conf.get(:child)
+  c.nested.ruby.blocks     #=> false
+  c.single                 #=> "pair"
+  c.properties.like.syntax #=> :nice
+
+  c.yet.another :value
+  c.yet.another            #=> :value
+
+  c.freeze
+  c.yet.another :changed   #=> can't modify frozen config
+
 
 == Note on Patches/Pull Requests
- 
+
 * Fork the project.
 * Make your feature addition or bug fix.
 * Add tests for it. This is important so I don't break it in a

@@ -6,7 +6,7 @@ begin
   Jeweler::Tasks.new do |gem|
     gem.name = "conf"
     gem.summary = %Q{Simple configuraton library that supports inheritance.}
-    gem.description = %Q{TODO: longer description of your gem}
+    gem.description = %Q{Simple configuraton library that supports inheritance.}
     gem.email = "jari.bakken@gmail.com"
     gem.homepage = "http://github.com/jarib/conf"
     gem.authors = ["Jari Bakken"]

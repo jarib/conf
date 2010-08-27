@@ -3,7 +3,8 @@ $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'conf'
 require 'spec'
 require 'spec/autorun'
+require 'pp'
 
 Spec::Runner.configure do |config|
-  
+
 end
