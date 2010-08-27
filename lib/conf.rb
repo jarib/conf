@@ -48,6 +48,16 @@ class Conf
       super
     end
 
+    def section(start_key)
+      result = @parent ? @parent.section(start_keykey) : {}
+
+      @data.each do |key, value|
+        result[key] = value if key =~ /^#{Regexp.escape start_key}/
+      end
+
+      result
+    end
+
     protected
 
     def data() @data end
@@ -94,7 +104,9 @@ class Conf
 
     def validate_nesting
       current = expand_key(nil)
-      unless @data.any? { |key,_| key.start_with?(current)} || (@parent && @parent.data.any? { |key,_| key.start_with?(current)})
+      match_proc = Proc.new { |key,_| key =~ /^#{Regexp.escape current}/ }
+
+      unless @data.any?(&match_proc) || (@parent && @parent.data.any?(&match_proc))
         @current_nesting.clear
         raise InvalidKeyError, "no such key: #{current.inspect}"
       end

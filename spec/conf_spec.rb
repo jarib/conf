@@ -97,4 +97,12 @@ describe "Conf" do
     conf.key?("foo.bar.baz").should be_true
     conf.key?("bar").should be_false
   end
+
+  it "retrieves a section of the config as a hash" do
+    Conf.define(:tmp) {
+      foo.bar.baz 1
+      foo.bar.boo 2
+      foo.bla.baz 3
+    }.section("foo.bar").should == {"foo.bar.baz" => 1, "foo.bar.boo" => 2}
+  end
 end
