@@ -66,7 +66,7 @@ class Conf
     end
 
     def section(start_key)
-      result = @parent ? @parent.section(start_keykey) : {}
+      result = @parent ? @parent.section(start_key) : {}
 
       @data.each do |key, value|
         result[key] = value if key =~ /^#{Regexp.escape start_key}/
