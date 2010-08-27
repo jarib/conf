@@ -29,11 +29,15 @@ Simple configuration that supports inheritance.
   c.single                 #=> "pair"
   c.properties.like.syntax #=> :nice
 
-  c.yet.another :value
-  c.yet.another            #=> :value
-
-  c.freeze
-  c.yet.another :changed   #=> can't modify frozen config
+  # can't modify locked config
+  c.nested.ruby.block true   #=> InvalidStateError 
+  
+  # unlock it first
+  c.unlocked do
+    nested.ruby.block true
+  end
+  
+  c.nested.ruby.block       #=> true
 
 
 == Note on Patches/Pull Requests

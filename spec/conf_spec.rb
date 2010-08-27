@@ -80,7 +80,7 @@ describe "Conf" do
   it "cannot be changed after being defined" do
     conf = Conf.define(:tmp) { foo "bar" }
     conf.foo.should == "bar"
-    lambda { conf.foo "baz" }.should raise_error
+    lambda { conf.foo "baz" }.should raise_error(Conf::InvalidStateError)
   end
 
   it "raises a TypeError if parent is not nil or Configuration instance" do

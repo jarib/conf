@@ -2,6 +2,9 @@ class Conf
 
   class InvalidKeyError < StandardError
   end
+  
+  class InvalidStateError < StandardError
+  end
 
   def self.configs
     @configs ||= {}
@@ -20,7 +23,7 @@ class Conf
     conf = configs[name] ||= Configuration.new(parent)
 
     conf.instance_eval(&blk)
-    conf.freeze
+    conf.lock!
     conf
   end
 
@@ -34,18 +37,32 @@ class Conf
         raise TypeError, "expected #{self.class}, got #{parent.inspect}:#{parent.class}"
       end
 
-      @parent = parent
-      @data   = {}
+      @parent          = parent
+      @data            = {}
       @current_nesting = []
+      @locked          = false
     end
 
     def key?(key)
       @data.key?(key) || (@parent && @parent.key?(key))
     end
 
-    def freeze
-      @parent && @parent.freeze
-      super
+    def lock!
+      @locked = true
+    end
+    
+    def unlock!
+      @locked = false
+    end
+    
+    def edit(&blk)
+      edit!
+      instance_eval(&blk)
+      done!
+    end
+    
+    def locked?
+      @locked
     end
 
     def section(start_key)
@@ -81,11 +98,11 @@ class Conf
       m = meth.to_s
 
       if m =~ /^(\w+)=/ || args.size == 1
-        check_frozen
+        check_lock
         key = $1 || m
         self[key] = args.first
       elsif blk
-        check_frozen
+        check_lock
         @current_nesting << m
         instance_eval(&blk)
         @current_nesting.pop
@@ -96,7 +113,7 @@ class Conf
           obj
         else
           @current_nesting << m
-          validate_nesting if frozen?
+          validate_nesting if locked?
           self
         end
       end
@@ -112,10 +129,10 @@ class Conf
       end
     end
 
-    def check_frozen
-      if frozen?
+    def check_lock
+      if locked?
         @current_nesting.clear
-        raise "can't modify frozen config"
+        raise InvalidStateError, "config is locked"
       end
     end
   end
