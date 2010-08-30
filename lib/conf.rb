@@ -29,11 +29,16 @@ class Conf
 
     def method_missing(meth, *args, &blk)
       m = meth.to_s
-      if m =~ /^(\w+)=/ || args.size == 1
+      
+      if m =~ /^to_/
+        super
+      elsif m =~ /^(\w+)=/ || args.size == 1
+        # setter
         @__root__.check_lock
         key = [@__key__, $1 || m].compact.join(".")
         @__root__[key] = ConfigValue.create(@__root__, key, args.first)
       else
+        # getter
         key = [@__key__, m].compact.join(".")
 
         obj = @__root__.data[key]

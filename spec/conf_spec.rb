@@ -121,11 +121,19 @@ describe "Conf" do
     child.section("foo.bar").should == {"foo.bar.baz" => 1, "foo.bar.bah" => 2}
   end
 
-  it "should handle nesting under existing values" do
-    Conf.define(:tmp) do
+  it "should handle nesting under existing (String) values" do
+    c = Conf.define(:tmp) do
       foo "bar"
       foo.bar "baz"
     end
+    
+    c.foo.should == "bar"
+    c.foo.bar.should == "baz"
+  end
+  
+  it "raises NoMethodError for to_ary" do
+    c = Conf.define(:tmp) { foo "bar" }
+    lambda { c.foo.to_ary }.should raise_error(NoMethodError)
   end
 
 end
