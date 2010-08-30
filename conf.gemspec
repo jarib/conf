@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{conf}
-  s.version = "0.0.8"
+  s.version = "0.0.9"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Jari Bakken"]
-  s.date = %q{2010-08-27}
+  s.date = %q{2010-08-30}
   s.description = %q{Simple configuraton library that supports inheritance.}
   s.email = %q{jari.bakken@gmail.com}
   s.extra_rdoc_files = [
