@@ -8,7 +8,7 @@ class Conf
 
   module ConfigValue
     def self.create(root, key, obj = Object.new)
-      return obj if obj == true || obj == false
+      return obj unless [String, Object].any? { |klass| obj.instance_of? klass }
       
       begin
         obj.extend(self)
